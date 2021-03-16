@@ -1,0 +1,373 @@
+%                                                                 aa.dem
+% AA vers. 9.1, LaTeX class for Astronomy & Astrophysics
+% demonstration file
+%                                                       (c) EDP Sciences
+%-----------------------------------------------------------------------
+%
+%\documentclass[referee]{aa} % for a referee version
+%\documentclass[onecolumn]{aa} % for a paper on 1 column  
+%\documentclass[longauth]{aa} % for the long lists of affiliations 
+%\documentclass[letter]{aa} % for the letters 
+%\documentclass[bibyear]{aa} % if the references are not structured 
+%                              according to the author-year natbib style
+
+%
+\documentclass{aa}  
+
+%
+\usepackage{graphicx}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{txfonts}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage[options]{hyperref}
+% To add links in your PDF file, use the package "hyperref"
+% with options according to your LaTeX or PDFLaTeX drivers.
+%
+\begin{document} 
+
+   \title{Ransac Assisted Spectral CALibration~(RASCAL)}
+
+   \subtitle{Towards automated spectral wavelength calibration}
+
+   \author{J. Veitch-Michaelis
+          \inst{1, 3}\fnmsep\thanks{veitchjo@uwisc.edu}
+          \and
+          M. C. Lam\inst{2, 3}
+          }
+
+   \institute{Department of Physics and Wisconsin IceCube Particle Astrophysics Center,
+University of Wisconsin, Madison, WI 53706, USA
+         \and
+        School of Physics and Astronomy, Tel Aviv University, Tel Aviv 69978, Israel
+         \and
+        Astrophysics Research Institute, Liverpool John Moores University, IC2, LSP, 146 Brownlow Hill, Liverpool L3 5RF, UK
+             }
+
+   \date{Received \today}
+
+% \abstract{}{}{}{}{} 
+% 5 {} token are mandatory
+ 
+  \abstract
+  % context heading (optional)
+  % {} leave it empty if necessary  
+   {Wavelength calibration is a routine and critical part of any spectral work-flow, but many astronomers still resort to matching detected peaks and emission lines by hand.}
+  % aims heading (mandatory)
+   {We present RASCAL (RANSAC Assisted Spectral CALibration), a python library for automated wavelength calibration of astronomical spectrographs. RASCAL implements recent state-of-the-art methods for wavelength calibration and requires minimal input from a user}
+  % methods heading (mandatory)
+   {}
+  % results heading (mandatory)
+   {we have developed RASCAL (RANSAC-Assisted Spectral CALibration). RASCAL only requires an atlas of calibration lines, a list of peaks,
+and some information about the system}
+  % conclusions heading (optional), leave it empty if necessary 
+   {}
+
+   \keywords{bla --
+                blabla --
+                blablabla
+               }
+
+   \maketitle
+%
+%-------------------------------------------------------------------
+\section{Introduction}
+Wavelength calibration is a routine and critical part of spectral data reduction
+workflow. This usually involves manually matching peaks in an arc lamp spectrum to a
+catalogue of known emission lines~\citep{2010MNRAS.409.1601B}. This is an extremely
+repetitive process and they accumulate to take up a substantial amount of time.
+Even for an experienced user, there is a bottleneck on how fast a manual reduction
+can reach.
+
+The advances in Astronomy in the past decade has enabled multi-epoch, multi-colour
+large sky-area surveys. Among the ground-base facilities, to name a few, the
+Optical Gravitational Lensing Experiment~\citep[OGLE]{2015AcA....65....1U},
+All-Sky Automated Survey for Supernovae~\citep[ASAS-SN]{2017PASP..129j4502K},
+ZTF~\citep[Zwicky Transient Facility]{2019PASP..131a8003M},
+BlackGEM~\citep[BlackGEM]{2015ASPC..496..254B}
+Gravitational-wave Optical Transient Observer~\citep[GOTO]{2020SPIE11445E..7GD}
+Panoramic Survey Telescope and Rapid Response System~\citep[Pan-STARRS]{2016arXiv161205560C}
+and forthcoming Vera Rubin Observatory~\citep[VRO]{2019ApJ...873..111I}. Both Galactic
+and extra-Galactic transient events are being found in steadily growing numbers.
+However while it is relatively easy to discover, for example, a supernova, it is much
+harder to collect the essential follow-up observations (both photometry and spectroscopy)
+to allow classification and subsequent scientific exploitation. In addition, with the
+advent of multi-messenger Astronomy with Gravitational Waves with
+LIGO~\citep{2015CQGra..32g4001L} and VIRGO~\citep{2015CQGra..32b4001A} and neutrino
+detectors, the IceCube~\citep{2006APh....26..155I}, rapid time-domain photometric and
+spectroscopic observations are becoming even more crucial to identify and confirm their
+electromagnetic counterparts. Hence, The quick turnover of the full data reductions is
+important in case of Target-of-Opportunity requests, which are best performed on robotic
+telescopes, and which can very quickly follow short-lived events like unusual supernovae,
+cataclysmic variables, planetary deviations in microlensing events, etc. This can only be
+made possible, with a global network of small/medium sized telescope dedicated for
+follow-up. They, however, even when the control systems are roboticized, most of the
+data curation is still depending entirely on manual operation. Despite there are various
+large scale spectroscopic surveys with high volume of data output and automated data
+reduction, for example, The Large Sky Area Multi-Object Fiber Spectroscopic
+Telescope~\citep[LAMOST]{2012RAA....12.1197C}, WHT Enhanced Area Velocity
+Explorer~\citep[WEAVE]{2012SPIE.8446E..0PD}, 4-metre Multi-Object Spectroscopic
+Telescope~\citep[4MOST]{2019Msngr.175....3D}, Galactic Archaeology with
+Hermes~\citep[GALAH]{2015MNRAS.449.2604D}, Radial Velocity
+Experiment~\citep[RAVE]{2020AJ....160...82S}, Mapping Nearby Galaxies at Apache Point
+Observatory\citep[MaNGA]{2015ApJ...798....7B} etc. They come with dedicated data
+reduction pipeline, with the software pruned to optimise performance in their specific
+settings. The large number of data collected simultaneously allows cross-calibration
+to certain extent. These generally unportable setups make the data reduction system
+difficult to be reused. The integration effort can be just as, or even more, significant
+as rewriting a new dedicated software that is specific to the newly roboticized systems.
+Or, in the more common case, the data reduction process is left for the individual
+scientists to complete, this is both inefficient in use of highly skilled resources,
+causes wasted duplication of software, and can lead to inhomogeneous data products
+that are difficult to combine from different facilities and observers.
+
+The Time Domain Astronomy section of the OPTICON recognise this series of issues and
+initiated an effort to develop a portable spectrograph and a portable data reduction
+software. They are now the SPRAT~\citep{2014SPIE.9147E..8HP} on the Liverpool
+Telescope~\citep{2004SPIE.5489..679S} at the Observatorio Astrof{\'i}sico Roque de los
+Muchachos, the MOOKODI on the Lesedi Telescope 
+at the South African Astronomical Observatory, and the MISTRAL on the 1.93\,m
+telescope at the Haute-Provence Observatory. On the data reduction side, a new
+general spectral pipeline, ASPIRED~\citep{2020arXiv201203505L, 2020zndo...4306065L},
+that is completely independent of \texttt{iraf}~\citep{1986SPIE..627..733T} is under
+active development and it is close to completion. It has been a concurrent development
+of the \texttt{RASCAL} software that handles the wavelength
+calibration~\citep{2019arXiv191205883V, 2020zndo...4117517V}.
+
+This following article is organised in this structure: in Section~2, we will address
+the difficulties in achieving automated wavelength calibration; in Section~3,
+\texttt{RASCAL} will describes in detail; the quality and the repeatability will
+be demonstrated in Section~4; the deployment on various systems and some example
+independent demonstrators will be reported in Section 5; in the final section, we
+will conclude on the software, including the limitation, maintenance, and the potential
+future development.
+
+\section{Wavelength Calibration}
+The process of wavelength calibration involves identifying distinctive emission lines
+from an arc lamp spectrum, from which a polynomial can be found to map the pixel
+position to the wavelength value. Automating this process may seem trivial, but in
+real life application, it is not remotely easy. The strong dependency on the 
+instrumental properties have made the wavelength calibration routines specific to
+the instruments, to name a few, the vacuum/contamination condition of the lamp, the 
+combination of elements in the lamp, the vignetting on the focal plan, the response
+as function of wavelength across the detector, saturation issue. There is also likely
+to be noise in the peak finding routines, for example, due to detector noise or
+quantization~(e.g.\ not using sub-pixel peak finding). There may also be complications
+such as blended lines - detected peaks which correspond to multiple emission lines,
+such as unresolved doublets. While many observatories have published reduction
+pipelines that involve wavelength calibration~\citep{2002AJ....123..485S,
+2012ascl.soft03003C, 2013ApJS..208....5N}, they are not transferable to other setups.
+In one specific general common pipeline, \texttt{PypeIt}~\citep{2020JOSS....5.2308P},
+it uses spectral template matching for wavelength calibration, and it is done specific
+per instrument. As we have discussed in the previous section, there is a growing need
+for an automated solution that is easily transferable and robust to system 
+re-configuration e.g. grating position, lamp type. This would be particularly
+useful in sharing a single data reduction pipeline among a network of small telescope
+facilities when staffing for software development and maintenance is limited.
+In order to address this, we have developed RASCAL~(RANSAC-Assisted Spectral CALibration).
+RASCAL only requires an atlas of calibration lines, a list of peaks, and some information
+about the system. RASCAL has been developed for the ASPIRED
+program~\citep{2019arXiv191205885L, 2020arXiv201203505L, 2020zndo...4306065L}
+and broadly follows the algorithm presented in \citet{2018ApOpt..57.6876S}. We are
+releasing RASCAL as open-source as a Python library that can be easily integrated in to
+astronomical pipelines. The original paper only presents results from commercial
+spectrometers, so we contribute an initial evaluation on real-world spectra
+from astronomical instruments. We also present some tweaks and improvements to the
+original algorithm that result in improved correspondence matching.
+
+\subsection{Challenges}
+Motivated by the computer vision algorithm, \citet{2018ApOpt..57.6876S} applies an
+outline detection algorithm making use of Hough transform to quickly identify first
+good guess of a pixel-to-wavelength polynomial solution. The proposition for an ideal
+system is: \textit{given a set of detected peak locations in an arc spectrum ($P$ [px]),
+there exists a set of matching emission lines ($A$ [$\lambda$]) for every $P$}.
+Once the correspondences between $P$ and $A$ have been established, they are
+used to fit a model $f(x, p) = x_{\lambda}$ where $p$ are model parameters, $x$ is a
+detector location in pixels and $x_{\lambda}$ is the corresponding wavelength.
+Because of the aforementioned instrumental/optical effects and imperfection in the
+system, this process is not as straight forward and has to be robust against outliers.
+Nevertheless, the emission lines in the atlas are assumed to be perfect and taken
+from the National Institute of Standards and Technology~\citep[NIST]{NIST\_ASD}
+which collates values from the literature; alternately, users can supply a line list.
+No assumption is made about the peak finding routine, see next section for more details.
+It is possible that some detected peaks are spurious or correspond to a line not in the
+atlas. Vice versa, it is possible that some atlas lines were not detected because they
+are outside the spectral range of the detector, too low in amplitude, and so on. In
+fact, in the general case, the real problem we face is: \textit{for any combination of
+member of $P$, there usually exists a corresponding member of $A$}. The goal is to find
+the true line in $A$ for each peak in $P$. Checking all possible sets of pairs of $A$
+and $P$ is computationally infeasible.Once peaks and wavelengths have been matched,
+the model fitting process is largely traditional. It is important that robust fitting
+methods are used, otherwise a single incorrect match can significantly skew the final
+model parameters.
+
+\section{RASCAL}
+In \citet{2018ApOpt..57.6876S}, they search for \textit{plausible} sets of
+correspondences which are constrained by prior knowledge about the system.
+Specifically they find solutions which agree with linear approximations to the
+system~($x_\lambda = Dx + c$). We likely know which lamp was used, and we also have
+priors on the minimum wavelength~($c$) and dispersion ($D$) of the system. Let $A'$ be
+a filtered atlas which only contains lines within a user-specified range of interest.
+We allow a default tolerance of $\pm 200$\AA~to this value. We constrain $D$ based on
+the number of pixels in the spectrum and the wavelength range.
+
+The original algorithm suggests fitting models to each Hough candidate set separately
+and then choosing the best. In our experience, this fails when there is a non-negligible
+curvature in the model function. Instead, we consider the top $N$ candidate sets
+simultaneously (we set $N = 20$ by default). For each peak, we choose the most common
+best-fit atlas line from the top candidate sets. This acts somewhat like a piece-wise
+linear fit and allows us to extract most of the correct matches from both the red and
+blue regions of the spectrum. RANdom SAmple
+Consensus~\citep[RANSAC][]{fischler_bolles_1981} is used to robustly fit
+a higher order polynomial model to the candidate correspondences. This model is used
+to return atlas correspondences for each peak, which can be passed to a more
+sophisticated fitting function e.g. an analytical model of the instrument such as
+in \citet{2013OptEn..52a3603L}.
+
+Three built-in diagnostic plots are available, each is available in both
+\texttt{plotly}~\citep{plotly} and \texttt{matplotlib}. The former can generate interactive
+readable by a browser, while being able to be rendered static plots. However,
+the installation can be difficult at times, so it is not our default plotting
+library. In fact, it is not even installed as a dependency. On the other hand,
+\texttt{matplotlib}~\citep{Hunter:2007} is the most commonly used plotting library
+among \texttt{Python} users, it has no known problematic upstream dependency issue.
+Therefore, it is chosen as our default plotting library. Its lack of
+interactivity has a small drawback, but there are external packages that can
+convert a \texttt{matplotlib} figure object into interactive plots, for example
+with \texttt{mpld3}\footnote{\url{http://mpld3.github.io/}}, and this can be done completely outside the functional call
+of \texttt{RASCAL}.
+
+\subsection{Hough Transform}
+Initially, every pair of peaks and emission lines are enumerated~(i.e.\ the
+Cartesian product of the sets $A' \times P$.) The Hough
+transform~\citep{osti_4746348} is used to search for linear correspondences
+among these enumerated pairs. The result of this is a histogram of possible lines
+in $(D, c)$ space. Peaks in the Hough space corresponds to straight lines
+in the pixel-wavelength space which pass through (or near) many sets of
+$A' \times P$, which we a candidate pair/set hereafter.
+
+\subsection{RANSAC}
+Random sample consensus, RANSAC, is an algorithm for robust fitting,
+popularized by the computer vision community~\citep{fischler_bolles_1981}.
+
+Suppose we have a dataset that contains good points~(inliers) and spurious
+points~(outliers). If we randomly sample our dataset, eventually we will
+pick a set of points which only contain the inliers. In that case, a model
+fit to this sample should also fit the majority of the rest of our data.
+Conversely if we sample an outlier by mistake, the fit will not agree with
+the rest of the dataset.
+
+This is conceptually very simple, but works extremely well in practice.
+Typically the sample size is the minimum required to fit the model, so for
+a linear model we would draw 2 random points. If you know the percentage of
+outliers in your data it is possible to calculate some statistical estimate
+of how many iterations is required before an inlier-only sample is drawn~(to
+some degree of confidence). In practice, we never know the inlier-to-outlier
+ratio and we just try ``a large number'' of samples\footnote{From experience,
+a few hundred is ``a lot''}. This number of samples can also be adjusted as 
+a hyperparameter for the algorithm to provide best results on a specific
+instrument.
+
+We also need to decide how to score a particular sample fit. In the original
+version of RANSAC, the number if inliers corresponding to a fit is used. More
+inliers equals a better fit. In RASCAL we use a slight modification called
+M-SAC~\citep{Torr00mlesac:a} which also weights inliers by the fit error.
+This is useful because it acts as a tie-breaker between two fits with the
+same number of inliers.
+
+\subsection{Procedure}
+In the following article, we refer a spectrum of an arc as an \textit{arc},
+the wavelength of the emission lines from an arc as \textit{lines}, whereas 
+the \textit{peaks} are the pixel position where the lines are centred at,
+and a collection of lines from some elements as \textit{atlas}.
+
+The following is \textbf{not} served as an API document, we are only highlighting
+some important and/or special features and limitations.
+
+\subsubsection*{Step 1 -- Initialise a Calibrator}
+A calibrator can be initialized with \texttt{Calibrator(peaks)} by passing a list of
+pixel values of the the peaks identified from an arc frame. This also initialises a
+logger inside to handle five levels of messages -- \textsc{debug}, \textsc{info},
+\textsc{warning}, \textsc{error} and \textsc{critical}, and a \texttt{HoughTransform}
+object that handles the transformation and the operations in Hough space. The
+properties of the calibrator, Hough transform and the RANSAC are set with their
+own functions to avoid confusion of similar name space, particularly regarding the
+limits and tolerances, namely:
+
+\subsubsection*{1. \texttt{set\_calibrator\_properties()}}
+The two main parameters to set are the \texttt{num\_pix} and \texttt{pixel\_list}. The
+latter can be ignored in most cases when the wavelength calibration is done with a
+single detector. 
+
+\subsubsection*{2. \texttt{set\_hough\_properties()}}
+
+
+\subsubsection*{3. \texttt{set\_ransac\_properties()}}
+
+
+\subsubsection*{Step 2 -- Supply atlas}
+An atlas can be loaded from the built-in list of cleaned NIST list with
+\texttt{load\_atlas()}; it is also possible for users to append user-defined set
+of lines with \texttt{add\_user\_atlas()}.
+
+\subsubsection*{Step 3 -- Configure the operations in Hough space}
+Build the set of Hough pairs by using \texttt{set\_peaks()} which calls \texttt{\_generate\_pairs()} to
+\begin{enumerate}
+    \item pair up \texttt{peaks} (piexls) and \texttt{atlas} (wavelength)
+    \item if \texttt{constrain\_poly} is set to \texttt{True}, \texttt{Delaunay} from \textsc{scipy} is usd to remove outlying points.
+    \item order the pairs into a list of [(peak 1, atlas 1), (peak 2, atlas 2), ..., (peak n, atlas n)]
+    \item Optionally, append the known (peak, atlas) pairs with \texttt{set\_known\_pairs()} which are used as anchor(s) when solving for the solutions. This function has to be used with extreme caution, a set of wrong \textbf{known pairs} will almost guarantee the best fit solution to be wrong.
+\end{enumerate}
+
+\subsubsection*{Step 4 -- Fit for the solution}
+By calling the \texttt{fit()}, it calls the \texttt{\_get\_best\_model()} to do the heavy duty which starts with initializing the Hough transform instance with \texttt{HoughTransform()} to execute the \texttt{generatePhough\_points()} and then \texttt{bin\_hough\_points()} to generate (1)~\texttt{hough\_points}, and (2)~\texttt{hough\_lines}.
+
+Run RANSAC on the Hough pairs using \texttt{\_solve\_candidate\_ransac()} to get the possible wavelength solution of all the peaks for the given \texttt{hough\_line}, which generates the \texttt{candidates} that contain the (1)~Hough solution wavelength, (2)~atlas wavelength, and (3)~weight of the solution. The most common weighted candidates will then be chosen with the \texttt{\_get\_most\_common\_candidates()} by counting and returning the \texttt{top\_n} most common Hough solution wavelength. The closely spaced candidates can be removed by setting \texttt{remove\_close} to \texttt{True}. The fit will stop and return nothing if the number of candidates is smaller than the (degree of the polynomial + 1). From the Hough pairs, build an interpolated 2D density map in Hough space. Fit the pixel-wavelength solution with polynomials. Discard the fit if the first and the second polynomials co-efficients are outside the tolerance limits. Evaluate the wavelengths with the fitted polynomials solution, compute the absolute difference between the solutions and the atlas to compute the \texttt{err} or functions. Get the \texttt{weight} function based on the intercepts and gradients form the pre-computed weight map. Combine the \texttt{err} and \texttt{weight} to get the \texttt{cost} function, if the new cost is lower, accept the new solution.
+
+
+\section{Quality and Repeatability}
+
+Automated methods vs manual/human identified peaks
+
+Measures of fit quality (Precision/Recall, hyperparameter tuning, tests on real instruments?)
+
+Testing framework with simulated spectra
+
+One of the goals of RASCAL is to be agnostic to the choice of calibration lamp or target. With 
+this in mind, it is not necessary to simulate a specific lamp for testing. Instead, we select
+the 
+
+\section{Dep parmloyment}
+simulated lamp
+\subsection{SPRAT}
+
+\subsection{Mokoodi}
+
+\subsection{Mistral}
+
+\subsection{Other unofficial systems}
+
+%--------------------------------------------------------------------
+\section{Conclusions}
+
+
+%--------------------------------------------------------------------
+\begin{acknowledgements}
+      Part of this work was supported by...
+\end{acknowledgements}
+
+% WARNING
+%-------------------------------------------------------------------
+% Please note that we have included the references to the file aa.dem in
+% order to compile it, but we ask you to:
+%
+% - use BibTeX with the regular commands:
+%   \bibliographystyle{aa} % style aa.bst
+%   \bibliography{Yourfile} % your references Yourfile.bib
+%
+% - join the .bib files when you upload your source files
+%-------------------------------------------------------------------
+
+\bibliographystyle{aa}
+\bibliography{rascal}
+
+\end{document}
