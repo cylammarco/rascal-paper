@@ -284,45 +284,132 @@ The following is \textbf{not} served as an API document, we are only highlightin
 some important and/or special features and limitations.
 
 \subsubsection*{Step 1 -- Initialise a Calibrator}
-A calibrator can be initialized with \texttt{Calibrator(peaks)} by passing a list of
-pixel values of the the peaks identified from an arc frame. This also initialises a
-logger inside to handle five levels of messages -- \textsc{debug}, \textsc{info},
-\textsc{warning}, \textsc{error} and \textsc{critical}, and a \texttt{HoughTransform}
-object that handles the transformation and the operations in Hough space. The
-properties of the calibrator, Hough transform and the RANSAC are set with their
-own functions to avoid confusion of similar name space, particularly regarding the
-limits and tolerances, namely:
+A calibrator can be initialized with \texttt{Calibrator(peaks)} by passing a list
+of pixel values of the the peaks identified from an arc frame. This also
+initialises a logger inside to handle five levels of messages -- \textsc{debug},
+\textsc{info}, \textsc{warning}, \textsc{error} and \textsc{critical}, and a
+Hough transform instance with \texttt{HoughTransform()} that handles the
+transformation and the operations in Hough space. The properties of the
+calibrator, Hough transform and the RANSAC are set with their own functions to
+avoid confusion of similar name space, particularly regarding the limits and
+tolerances, namely:
 
-\subsubsection*{1. \texttt{set\_calibrator\_properties()}}
-The two main parameters to set are the \texttt{num\_pix} and \texttt{pixel\_list}. The
-latter can be ignored in most cases when the wavelength calibration is done with a
-single detector. 
+\subsubsection*{i. \texttt{set\_calibrator\_properties()}}
+The two main parameters to set are the \texttt{num\_pix} and \texttt{pixel\_list}.
+The latter can be ignored in most cases when the wavelength calibration is done
+with a single detector. This is also where to choose the plotting library between
+\texttt{matplotlib} or \texttt{plotly}; and the verbosity of the logger.
 
-\subsubsection*{2. \texttt{set\_hough\_properties()}}
+\subsubsection*{ii. \texttt{set\_hough\_properties()}}
+This function controls the Hough transform. It defines the binning parameters for
+generating the Hough pairs, the wavelength ranges of the atlas, and the tolerances
+in which Hough pairs will be accepted. See Fig~\ref{fig:threshold}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=\columnwidth]{threshold_plot.png}
+    \caption{This illustrate how the \texttt{linearity\_thresh},
+    \texttt{range\_tolerance} and the wavelength limits restrict the parameter
+    space in the Hough space to significantly reduce the possible solution Hough
+    pairs.}
+    \label{fig:threshold}
+\end{figure}
 
-\subsubsection*{3. \texttt{set\_ransac\_properties()}}
-
+\subsubsection*{iii. \texttt{set\_ransac\_properties()}}
+After supplying the atlas, we also need to define the properties of the RANSAC
+operations. It needs the knowledge of both the atlas and the set of Hough pairs
+so it cannot be predefined unless it is already deployed in some routine or
+automated processing that the fitting parameters are already well known to
+achieve desired output quality. The closely spaced Hough candidates can be
+removed by setting \texttt{filter\_close} to \texttt{True}.
 
 \subsubsection*{Step 2 -- Supply atlas}
 An atlas can be loaded from the built-in list of cleaned NIST list with
-\texttt{load\_atlas()}; it is also possible for users to append user-defined set
-of lines with \texttt{add\_user\_atlas()}.
+\texttt{load\_atlas()}, the intensity of the lines are also in included.
+However, there is no easy way to account for the response function of
+the detector without flatfielding and flux calibration, which in turn
+requires wavelength calibration. The intensity setting should only be
+used for removing very faint lines. It is also possible to, and in fact
+recommended, for users to provide a user-defined set of atlas with the
+function \texttt{add\_user\_atlas()}. This can significantly improve
+both the quality of fit as well as the speed of the fitting process.
 
 \subsubsection*{Step 3 -- Configure the operations in Hough space}
-Build the set of Hough pairs by using \texttt{set\_peaks()} which calls \texttt{\_generate\_pairs()} to
+The set of Hough pairs are generated with \texttt{set\_peaks()} which usess
+\texttt{\_generate\_pairs()} to
 \begin{enumerate}
-    \item pair up \texttt{peaks} (piexls) and \texttt{atlas} (wavelength)
-    \item if \texttt{constrain\_poly} is set to \texttt{True}, \texttt{Delaunay} from \textsc{scipy} is usd to remove outlying points.
-    \item order the pairs into a list of [(peak 1, atlas 1), (peak 2, atlas 2), ..., (peak n, atlas n)]
-    \item Optionally, append the known (peak, atlas) pairs with \texttt{set\_known\_pairs()} which are used as anchor(s) when solving for the solutions. This function has to be used with extreme caution, a set of wrong \textbf{known pairs} will almost guarantee the best fit solution to be wrong.
+    \item Pair up \texttt{peaks} (piexls) and \texttt{atlas} (wavelength)
+    \item If \texttt{constrain\_poly} is set to \texttt{True},
+        \texttt{Delaunay} from \textsc{scipy} is usd to remove outlying points.
+    \item Order the pairs into a sorted list of [(peak 1, atlas 1),
+        (peak 2, atlas 2), ..., (peak n, atlas n)]
+    \item Optionally, append the known (peak, atlas) pairs with
+        \texttt{set\_known\_pairs()} which are used as anchor(s) when solving
+            for the solutions. This function has to be used with extreme
+            caution, a set of wrong \textbf{known pairs} will almost guarantee
+            the best fit solution to be wrong.
 \end{enumerate}
 
-\subsubsection*{Step 4 -- Fit for the solution}
-By calling the \texttt{fit()}, it calls the \texttt{\_get\_best\_model()} to do the heavy duty which starts with initializing the Hough transform instance with \texttt{HoughTransform()} to execute the \texttt{generatePhough\_points()} and then \texttt{bin\_hough\_points()} to generate (1)~\texttt{hough\_points}, and (2)~\texttt{hough\_lines}.
+\subsubsection*{Step 4 -- Run Hough Transform}
+When executing the \texttt{\_do\_hough\_transform()}, the Hough parameters
+will be propagated to the HoughTransform instance immediately before
+executing the \texttt{generate\_hough\_points()} and
+\texttt{bin\_hough\_points()} to generate the set of 
+(1)~\texttt{hough\_points}, and (2)~\texttt{hough\_lines}. A HoughTransform
+instance can be saved and loaded as \texttt{npy} or plain text \texttt{json}
+files.
 
-Run RANSAC on the Hough pairs using \texttt{\_solve\_candidate\_ransac()} to get the possible wavelength solution of all the peaks for the given \texttt{hough\_line}, which generates the \texttt{candidates} that contain the (1)~Hough solution wavelength, (2)~atlas wavelength, and (3)~weight of the solution. The most common weighted candidates will then be chosen with the \texttt{\_get\_most\_common\_candidates()} by counting and returning the \texttt{top\_n} most common Hough solution wavelength. The closely spaced candidates can be removed by setting \texttt{remove\_close} to \texttt{True}. The fit will stop and return nothing if the number of candidates is smaller than the (degree of the polynomial + 1). From the Hough pairs, build an interpolated 2D density map in Hough space. Fit the pixel-wavelength solution with polynomials. Discard the fit if the first and the second polynomials co-efficients are outside the tolerance limits. Evaluate the wavelengths with the fitted polynomials solution, compute the absolute difference between the solutions and the atlas to compute the \texttt{err} or functions. Get the \texttt{weight} function based on the intercepts and gradients form the pre-computed weight map. Combine the \texttt{err} and \texttt{weight} to get the \texttt{cost} function, if the new cost is lower, accept the new solution.
+\subsubsection*{Step 5 -- Fit for the solution}
+Most of the parameters were already set in with the three functions described
+in step 1. At this point, only the fitting parameters are remained to be
+configured: the number of iterations -- \texttt{max\_tries}, the degree of
+polynomial to be fitted (\texttt{fit\_deg}), a starting set of polynomial
+coefficients~(\texttt{fit\_coeff}), the acceptance threshold~
+(\texttt{fit\_tolerance}) and the type of polynomial which can be chosen
+from \texttt{ploy} for basic polynomial function, \texttt{legendre} or Legendre
+polynomial function and \texttt{chebyshev} Chebyshev polynomial function. The
+\texttt{brute\_force} can be set to True to discard the \texttt{max\_tries}
+and try all possible combination in the given parameter space. The
+\texttt{progress} is set to True by default to use the \texttt{tqdm} package
+to show the progress of the fit.
 
+The \texttt{fit()} function handles the heavy duty using the
+\texttt{\_solve\_candidate\_ransac()}. It starts from getting the possible
+wavelength solution of all the peaks for the given \texttt{hough\_line}, which
+generates the \texttt{candidates} that contain the (1)~Hough solution wavelength,
+(2)~atlas wavelength, and (3)~weight of the solution. The most common weighted
+candidates will then be chosen with the \texttt{\_get\_most\_common\_candidates()}
+by counting and returning the \texttt{top\_n} most common Hough solution wavelength.
+The fit will stop and return nothing if the number of candidates is smaller than
+the (degree of the polynomial + 1). From the Hough pairs, an interpolated 2D
+density map is built in the Hough space, which is used as a weight map,
+\texttt{weight}, in the fitting process. The pixel-wavelength solution will be
+solved with the chosen polynomial function. The fit will be discarded if the two
+lowest polynomials co-efficients are outside the combined tolerance limits. The
+absolute difference between the solutions and the atlas will give us the
+uncertainties, \texttt{err}, of the solution. The \texttt{cost} function can
+be computed by combining the \texttt{err} and \texttt{weight}. If the new cost
+is lower, the new solution will be accepted.
+
+An optional function \texttt{match\_peaks} is also available to refine the
+fitted solution. It comes in two modes, the first is a more stable and
+conservative way to refit the solution by searching for the wavelength-calibrated
+peaks that are within the given tolerance limit from the atlas supplied. This
+can give a marginally better fit, particularly reducing the root-mean-squared
+measured. The second mode can be enabled by setting \texttt{refine} to
+\texttt{True}, in this case, the small perturbation will be added to the accepted
+set of polynomial coefficients and then a minimisation routine will be used to
+fit for the new polynomial.
+
+\subsubsection*{Diagnostics}
+\textsc{RARCAL} comes with three built-in diagnostic plots, the most basic
+one is the \texttt{plot\_arc} function which plot the arc spectrum
+supplied along with the detected peaks. The other two are far more useful:
+the \texttt{plot\_search\_space()} shows the search area in Hough space and
+the final sets of Hough lines that were used in the solution; the
+\texttt{plot\_fit()} displays the wavelength calibrated arc spectrum, the
+residual of the solution as a function of wavelength, and the fitted polynomial
+function as a function of wavelength.
 
 \section{Quality and Repeatability}
 
@@ -336,7 +423,7 @@ One of the goals of RASCAL is to be agnostic to the choice of calibration lamp o
 this in mind, it is not necessary to simulate a specific lamp for testing. Instead, we select
 the 
 
-\section{Dep parmloyment}
+\section{Deployment}
 simulated lamp
 \subsection{SPRAT}
 
