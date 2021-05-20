@@ -305,9 +305,9 @@ This function controls the Hough transform. It defines the binning parameters fo
 generating the Hough pairs, the wavelength ranges of the atlas, and the tolerances
 in which Hough pairs will be accepted. See Fig~\ref{fig:threshold}
 
-\begin{figure}
+\begin{figure}[h]
     \centering
-    \includegraphics[width=\columnwidth]{threshold_plot.png}
+    \includegraphics[width=\columnwidth]{figure_1_threshold_plot.png}
     \caption{This illustrate how the \texttt{linearity\_thresh},
     \texttt{range\_tolerance} and the wavelength limits restrict the parameter
     space in the Hough space to significantly reduce the possible solution Hough
@@ -411,27 +411,70 @@ the final sets of Hough lines that were used in the solution; the
 residual of the solution as a function of wavelength, and the fitted polynomial
 function as a function of wavelength.
 
-\section{Quality and Repeatability}
+\section{Quality and Repeatabality}
 
-Automated methods vs manual/human identified peaks
-
-Measures of fit quality (Precision/Recall, hyperparameter tuning, tests on real instruments?)
-
-Testing framework with simulated spectra
+\subsection{Testing framework with simulated spectra}
 
 One of the goals of RASCAL is to be agnostic to the choice of calibration lamp or target. With 
 this in mind, it is not necessary to simulate a specific lamp for testing. Instead, we select
 the 
 
-\section{Deployment}
-simulated lamp
-\subsection{SPRAT}
 
-\subsection{Mokoodi}
+\subsection{Testing with LT/SPRAT Xe lamp}
 
-\subsection{Mistral}
+Automatic line list vs manual line list
+note that both automatic and manual line lists are only referring to a set of wavelengths of the arc lines. The peaks in both cases are determined automatically.
 
-\subsection{Other unofficial systems}
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figure_2_polynomial_coefficients.png}
+    \caption{Distributions of the 5 polynomial coefficients at the 11 \texttt{max\_tries} with automatic line list (top), and manual line list (bottom). There is a clear pattern of a narrower distribution with larger \texttt{max\_tries}. It is also clear that manual line list outperforms auto line list significantly. The values of the RMS and dispersion can be referred to Figure~\ref{fig:rms} and Table~\ref{tab:stats}.}
+    \label{fig:coefficients}
+\end{figure*}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{figure_3_rms.png}
+    \caption{The distribution of the 1000 RMS values at the 11 \texttt{max\_tries} for auto line list (top) and manual line list (bottom). The convergence rate is much faster and the solution is much more stable when a known line list is provided.}
+    \label{fig:rms}
+\end{figure}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{figure_4_peak_utilisation.png}
+    \caption{The distribution of the 1000 \texttt{peak\_utilisation} values at the 11 \texttt{max\_tries} for auto line list (top) and manual line list (bottom). The low utilisation fraction in the top figure indicates that the auto line list contains much more lines than the number of peaks being detected. The near-perfect utilisation fraction in the manual list demonstrates that \textsc{rascal} has a high repetability despite the trial samples are drawn completely randomly in the first place.}
+    \label{fig:peak_utilisation}
+\end{figure}
+
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{figure_5_wavelengths.png}
+    \caption{Distributions of the wavelength solution at pixel 1, 256, 512, 768 and 1024 at the 11 \texttt{max\_tries} with automatic line list (top), and manual line list (bottom). There is a clear pattern of a narrower distribution with larger \texttt{max\_tries}. It is also clear that manual line list outperforms auto line list significantly. The statistics can be referred to Table~\ref{tab:stats}.}
+    \label{fig:wavelengths}
+\end{figure*}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{figure_6_heatmap.png}
+    \caption{The heatmaps showing the deviation of the fitted wavelengths from the true value as a function of pixel. The using auto line list (top) is giving good solutions most of the time, but it is clear that the manual line list completely outperforms the automatic one.}
+    \label{fig:heatmap}
+\end{figure}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{c|c}
+        a & b \\
+        c & d
+    \end{tabular}
+    \caption{Caption}
+    \label{tab:stats}
+\end{table}
+
+\subsection{Other systems}
 
 %--------------------------------------------------------------------
 \section{Conclusions}
