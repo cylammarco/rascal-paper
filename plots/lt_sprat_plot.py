@@ -1,11 +1,16 @@
+import itertools
+import os
+
+from astropy.io import fits
 from matplotlib import pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.patches as patches
 import matplotlib.ticker as plticker
-import itertools
 import matplotlib as mpl
 import numpy as np
-import os
+from scipy.signal import find_peaks
+
+from rascal import util
 
 # Load the LT SPRAT data
 if '__file__' in locals():
@@ -256,15 +261,15 @@ pix4_range = (np.nanmean(wave_manual[-1][:, 4]) - resolution1 * 50,
               np.nanmean(wave_manual[-1][:, 4]) + resolution1 * 50)
 
 pix0_range_manual = (np.nanmean(wave_manual[-1][:, 0]) - resolution1 * 5,
-              np.nanmean(wave_manual[-1][:, 0]) + resolution1 * 5)
+                     np.nanmean(wave_manual[-1][:, 0]) + resolution1 * 5)
 pix1_range_manual = (np.nanmean(wave_manual[-1][:, 1]) - resolution1 * 5,
-              np.nanmean(wave_manual[-1][:, 1]) + resolution1 * 5)
+                     np.nanmean(wave_manual[-1][:, 1]) + resolution1 * 5)
 pix2_range_manual = (np.nanmean(wave_manual[-1][:, 2]) - resolution1 * 5,
-              np.nanmean(wave_manual[-1][:, 2]) + resolution1 * 5)
+                     np.nanmean(wave_manual[-1][:, 2]) + resolution1 * 5)
 pix3_range_manual = (np.nanmean(wave_manual[-1][:, 3]) - resolution1 * 5,
-              np.nanmean(wave_manual[-1][:, 3]) + resolution1 * 5)
+                     np.nanmean(wave_manual[-1][:, 3]) + resolution1 * 5)
 pix4_range_manual = (np.nanmean(wave_manual[-1][:, 4]) - resolution1 * 5,
-              np.nanmean(wave_manual[-1][:, 4]) + resolution1 * 5)
+                     np.nanmean(wave_manual[-1][:, 4]) + resolution1 * 5)
 
 fig5, ax5 = plt.subplots(2, 5, sharey=True)
 fig5.set_figheight(10)
@@ -353,11 +358,11 @@ ax5[0, 4].set_xlim(
     np.nanmean(wave_manual[-1][:, 4]) - resolution5 * 50,
     np.nanmean(wave_manual[-1][:, 4]) + resolution5 * 50)
 
-loc1 = plticker.MultipleLocator(base=resolution1*10)
-loc2 = plticker.MultipleLocator(base=resolution2*10)
-loc3 = plticker.MultipleLocator(base=resolution3*10)
-loc4 = plticker.MultipleLocator(base=resolution4*10)
-loc5 = plticker.MultipleLocator(base=resolution5*10)
+loc1 = plticker.MultipleLocator(base=resolution1 * 10)
+loc2 = plticker.MultipleLocator(base=resolution2 * 10)
+loc3 = plticker.MultipleLocator(base=resolution3 * 10)
+loc4 = plticker.MultipleLocator(base=resolution4 * 10)
+loc5 = plticker.MultipleLocator(base=resolution5 * 10)
 
 ax5[1, 0].set_xlim(
     np.nanmean(wave_manual[-1][:, 0]) - resolution1 * 5,
@@ -432,11 +437,41 @@ ax5[1, 2].set_xticklabels(label3_manual, rotation=270)
 ax5[1, 3].set_xticklabels(label4_manual, rotation=270)
 ax5[1, 4].set_xticklabels(label5_manual, rotation=270)
 
-rect1 = patches.Rectangle((np.nanmean(wave_manual[-1][:, 0]) - resolution1 * 10, -10), resolution1*20, 1100, lw=2, edgecolor='grey', facecolor='lightcyan')
-rect2 = patches.Rectangle((np.nanmean(wave_manual[-1][:, 1]) - resolution2 * 10, -10), resolution2*20, 1100, lw=2, edgecolor='grey', facecolor='lightcyan')
-rect3 = patches.Rectangle((np.nanmean(wave_manual[-1][:, 2]) - resolution3 * 10, -10), resolution3*20, 1100, lw=2, edgecolor='grey', facecolor='lightcyan')
-rect4 = patches.Rectangle((np.nanmean(wave_manual[-1][:, 3]) - resolution4 * 10, -10), resolution4*20, 1100, lw=2, edgecolor='grey', facecolor='lightcyan')
-rect5 = patches.Rectangle((np.nanmean(wave_manual[-1][:, 4]) - resolution5 * 10, -10), resolution5*20, 1100, lw=2, edgecolor='grey', facecolor='lightcyan')
+rect1 = patches.Rectangle(
+    (np.nanmean(wave_manual[-1][:, 0]) - resolution1 * 10, -10),
+    resolution1 * 20,
+    1100,
+    lw=2,
+    edgecolor='grey',
+    facecolor='lightcyan')
+rect2 = patches.Rectangle(
+    (np.nanmean(wave_manual[-1][:, 1]) - resolution2 * 10, -10),
+    resolution2 * 20,
+    1100,
+    lw=2,
+    edgecolor='grey',
+    facecolor='lightcyan')
+rect3 = patches.Rectangle(
+    (np.nanmean(wave_manual[-1][:, 2]) - resolution3 * 10, -10),
+    resolution3 * 20,
+    1100,
+    lw=2,
+    edgecolor='grey',
+    facecolor='lightcyan')
+rect4 = patches.Rectangle(
+    (np.nanmean(wave_manual[-1][:, 3]) - resolution4 * 10, -10),
+    resolution4 * 20,
+    1100,
+    lw=2,
+    edgecolor='grey',
+    facecolor='lightcyan')
+rect5 = patches.Rectangle(
+    (np.nanmean(wave_manual[-1][:, 4]) - resolution5 * 10, -10),
+    resolution5 * 20,
+    1100,
+    lw=2,
+    edgecolor='grey',
+    facecolor='lightcyan')
 
 ax5[0, 0].set_facecolor('cornsilk')
 ax5[0, 1].set_facecolor('cornsilk')
@@ -459,6 +494,8 @@ ax5[1, 4].set_facecolor('lightcyan')
 fig5.savefig('figure_4_wavelengths.png')
 
 # Figure 6 - 2D heatmap of the solution
+
+
 fig6, ax6 = plt.subplots(2, 1, sharex=True, sharey=False)
 fig6.set_figheight(6)
 fig6.set_figwidth(6)
@@ -501,11 +538,6 @@ ax6[0].set_yticks(np.linspace(0, 100, len(dw_yedges[::10])) - 0.5)
 ax6[0].set_yticklabels(dw_yedges[::10].astype('int'))
 ax6[0].set_ylabel(r'$\Delta\lambda\ /\ \AA$')
 
-ax6a = ax6[0].twiny()
-ax6a.set_xticks(pix[::200] - 1)
-ax6a.set_xticklabels(np.nanmedian(wave, axis=0)[::200].astype('int'))
-ax6a.set_xlabel(r'Wavelength / $\AA$')
-
 ax6[1].imshow(np.array(delta_wave_manual_heatmap).T,
               origin='lower',
               aspect='auto')
@@ -515,42 +547,151 @@ ax6[1].set_yticklabels(dw_manual_yedges[::10].astype('int'))
 ax6[1].set_ylabel(r'$\Delta\lambda\ /\ \AA$')
 ax6[1].set_xticks(pix[::200] - 1)
 ax6[1].set_xticklabels((pix[::200] - 1).astype('int'))
-ax6[1].set_xlabel('Pixel')
+ax6[1].set_xlabel('Calibration Run #')
 
-ax6[0].vlines([np.argwhere(wave[-1]>4500)[0], np.argwhere(wave[-1]>8050)[0]], ymin=0, ymax=99, color='white', ls=':', lw=1)
-ax6[1].vlines([np.argwhere(wave[-1]>4500)[0], np.argwhere(wave[-1]>8050)[0]], ymin=0, ymax=99, color='white', ls=':', lw=1)
 
+ax6[0].vlines(
+    [173,
+     1000],
+    ymin=0,
+    ymax=99,
+    color='grey',
+    ls=':',
+    lw=1)
+ax6[1].vlines(
+    [173,
+     1000],
+    ymin=0,
+    ymax=99,
+    color='grey',
+    ls=':',
+    lw=1)
 res = wave[-1] / 300.
+
+# auto calibration
 ax6[0].plot(50 + res, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 + res*2, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 + res*3, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 + res*4, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 + res*5, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 + res * 2, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 + res * 3, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 + res * 4, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 + res * 5, color='black', lw=1, ls='dashed')
 ax6[0].plot([0, 1000], [50, 50], color='black', lw=1, ls='dashed')
-ax6[0].plot(50 -res, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 -res*2, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 -res*3, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 -res*4, color='black', lw=1, ls='dashed')
-ax6[0].plot(50 -res*5, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 - res, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 - res * 2, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 - res * 3, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 - res * 4, color='black', lw=1, ls='dashed')
+ax6[0].plot(50 - res * 5, color='black', lw=1, ls='dashed')
 ax6[0].plot([0, 1000], [55, 55], color='white', lw=1, ls=':')
 ax6[0].plot([0, 1000], [45, 45], color='white', lw=1, ls=':')
 ax6[0].set_xlim(0, 1000)
-ax6[0].set_ylim(0, 100)
+ax6[0].set_ylim(0, 99.5)
 
+# manual calibration
 ax6[1].plot(50 + res, color='black', lw=1, ls=':')
-ax6[1].plot(50 + res*2, color='black', lw=1, ls=':')
-ax6[1].plot(50 + res*3, color='black', lw=1, ls=':')
-ax6[1].plot(50 + res*4, color='black', lw=1, ls=':')
-ax6[1].plot(50 + res*5, color='black', lw=1, ls=':')
+ax6[1].plot(50 + res * 2, color='black', lw=1, ls=':')
+ax6[1].plot(50 + res * 3, color='black', lw=1, ls=':')
+ax6[1].plot(50 + res * 4, color='black', lw=1, ls=':')
+ax6[1].plot(50 + res * 5, color='black', lw=1, ls=':')
 ax6[1].plot([0, 1000], [50, 50], color='black', lw=1, ls=':')
-ax6[1].plot(50 -res, color='black', lw=1, ls=':')
-ax6[1].plot(50 -res*2, color='black', lw=1, ls=':')
-ax6[1].plot(50 -res*3, color='black', lw=1, ls=':')
-ax6[1].plot(50 -res*4, color='black', lw=1, ls=':')
-ax6[1].plot(50 -res*5, color='black', lw=1, ls=':')
+ax6[1].plot(50 - res, color='black', lw=1, ls=':')
+ax6[1].plot(50 - res * 2, color='black', lw=1, ls=':')
+ax6[1].plot(50 - res * 3, color='black', lw=1, ls=':')
+ax6[1].plot(50 - res * 4, color='black', lw=1, ls=':')
+ax6[1].plot(50 - res * 5, color='black', lw=1, ls=':')
 ax6[1].set_xlim(0, 1000)
-ax6[1].set_ylim(0, 100)
+ax6[1].set_ylim(-0.5, 100)
 
 fig6.tight_layout()
 fig6.subplots_adjust(hspace=0)
 fig6.savefig('figure_5_heatmap.png')
+
+print('Auto calibration:')
+for i, mt in enumerate(max_tries):
+    print('max_tries = {}.'.format(i))
+    print('C0 = {} +/- {}.'.format(np.nanmean(best_p_mt[i][:, 0]),
+                                   np.nanstd(best_p_mt[i][:, 0])))
+    print('C1 = {} +/- {}.'.format(np.nanmean(best_p_mt[i][:, 1]),
+                                   np.nanstd(best_p_mt[i][:, 1])))
+    print('C2 = {} +/- {}.'.format(np.nanmean(best_p_mt[i][:, 2]),
+                                   np.nanstd(best_p_mt[i][:, 2])))
+    print('C3 = {} +/- {}.'.format(np.nanmean(best_p_mt[i][:, 3]),
+                                   np.nanstd(best_p_mt[i][:, 3])))
+    print('C4 = {} +/- {}.'.format(np.nanmean(best_p_mt[i][:, 4]),
+                                   np.nanstd(best_p_mt[i][:, 4])))
+    print('RMS = {} +/- {}.'.format(np.nanmean(rms_mt[i]),
+                                    np.nanstd(rms_mt[i])))
+    print('Peak Utilisation = {} +/- {}.'.format(
+        np.nanmean(peak_utilisation_mt[i]), np.nanstd(peak_utilisation_mt[i])))
+    print('Atlas Utilisation = {} +/- {}.'.format(
+        np.nanmean(atlas_utilisation_mt[i]),
+        np.nanstd(atlas_utilisation_mt[i])))
+    wave150 = []
+    wave350 = []
+    wave550 = []
+    wave750 = []
+    wave950 = []
+    for j in range(N):
+        wave150.append(np.polynomial.polynomial.polyval(150, best_p_mt[i][j]))
+        wave350.append(np.polynomial.polynomial.polyval(350, best_p_mt[i][j]))
+        wave550.append(np.polynomial.polynomial.polyval(550, best_p_mt[i][j]))
+        wave750.append(np.polynomial.polynomial.polyval(750, best_p_mt[i][j]))
+        wave950.append(np.polynomial.polynomial.polyval(950, best_p_mt[i][j]))
+
+    print('Pix 150 = {} +/- {}.'.format(np.nanmean(wave150),
+                                        np.nanstd(wave150)))
+    print('Pix 350 = {} +/- {}.'.format(np.nanmean(wave350),
+                                        np.nanstd(wave350)))
+    print('Pix 550 = {} +/- {}.'.format(np.nanmean(wave550),
+                                        np.nanstd(wave550)))
+    print('Pix 750 = {} +/- {}.'.format(np.nanmean(wave750),
+                                        np.nanstd(wave750)))
+    print('Pix 950 = {} +/- {}.'.format(np.nanmean(wave950),
+                                        np.nanstd(wave950)))
+
+print('Manual calibration:')
+for i, mt in enumerate(max_tries):
+    print('max_tries = {}.'.format(i))
+    print('C0 = {} +/- {}.'.format(np.nanmean(best_p_manual_mt[i][:, 0]),
+                                   np.nanstd(best_p_manual_mt[i][:, 0])))
+    print('C1 = {} +/- {}.'.format(np.nanmean(best_p_manual_mt[i][:, 1]),
+                                   np.nanstd(best_p_manual_mt[i][:, 1])))
+    print('C2 = {} +/- {}.'.format(np.nanmean(best_p_manual_mt[i][:, 2]),
+                                   np.nanstd(best_p_manual_mt[i][:, 2])))
+    print('C3 = {} +/- {}.'.format(np.nanmean(best_p_manual_mt[i][:, 3]),
+                                   np.nanstd(best_p_manual_mt[i][:, 3])))
+    print('C4 = {} +/- {}.'.format(np.nanmean(best_p_manual_mt[i][:, 4]),
+                                   np.nanstd(best_p_manual_mt[i][:, 4])))
+    print('RMS = {} +/- {}.'.format(np.nanmean(rms_manual_mt[i]),
+                                    np.nanstd(rms_manual_mt[i])))
+    print('Peak Utilisation = {} +/- {}.'.format(
+        np.nanmean(peak_utilisation_manual_mt[i]),
+        np.nanstd(peak_utilisation_manual_mt[i])))
+    print('Atlas Utilisation = {} +/- {}.'.format(
+        np.nanmean(atlas_utilisation_manual_mt[i]),
+        np.nanstd(atlas_utilisation_manual_mt[i])))
+    wave150 = []
+    wave350 = []
+    wave550 = []
+    wave750 = []
+    wave950 = []
+    for j in range(N):
+        wave150.append(
+            np.polynomial.polynomial.polyval(150, best_p_manual_mt[i][j]))
+        wave350.append(
+            np.polynomial.polynomial.polyval(350, best_p_manual_mt[i][j]))
+        wave550.append(
+            np.polynomial.polynomial.polyval(550, best_p_manual_mt[i][j]))
+        wave750.append(
+            np.polynomial.polynomial.polyval(750, best_p_manual_mt[i][j]))
+        wave950.append(
+            np.polynomial.polynomial.polyval(950, best_p_manual_mt[i][j]))
+
+    print('Pix 150 = {} +/- {}.'.format(np.nanmean(wave150),
+                                        np.nanstd(wave150)))
+    print('Pix 350 = {} +/- {}.'.format(np.nanmean(wave350),
+                                        np.nanstd(wave350)))
+    print('Pix 550 = {} +/- {}.'.format(np.nanmean(wave550),
+                                        np.nanstd(wave550)))
+    print('Pix 750 = {} +/- {}.'.format(np.nanmean(wave750),
+                                        np.nanstd(wave750)))
+    print('Pix 950 = {} +/- {}.'.format(np.nanmean(wave950),
+                                        np.nanstd(wave950)))
