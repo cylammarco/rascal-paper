@@ -20,6 +20,7 @@
 \usepackage{txfonts}
 \usepackage{pdflscape}
 \usepackage{xcolor}
+\usepackage{multirow}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\usepackage[options]{hyperref}
 % To add links in your PDF file, use the package "hyperref"
@@ -457,23 +458,42 @@ minima coming from fitting spurious lines.
 \begin{figure}[h]
     \centering
     \includegraphics[width=\columnwidth]{plots/figure_2_rms.png}
-    \caption{The distribution of the 1000 RMS values at the 8 \texttt{max\_tries} for auto line list (top) and manual line list (bottom). The convergence rate is much faster and the solution is much more stable when a known line list is provided.}
+    \caption{The distribution of the 1000 RMS values at the 8 \texttt{max\_tries} for
+    auto line list (top) and manual line list (bottom). The convergence rate is much
+    faster and the solution is much more stable when a known line list is provided.}
     \label{fig:rms}
 \end{figure}
 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\columnwidth]{plots/figure_4_peak_utilisation.png}
-    \caption{The distribution of the 1000 \texttt{peak\_utilisation} values at the 8 \texttt{max\_tries} for auto line list (top) and manual line list (bottom). The low utilisation fraction in the top figure indicates that the auto line list contains much more lines than the number of peaks being detected. The near-perfect utilisation fraction in the manual list demonstrates that \texttt{rascal} has a high repeatibility despite the trial samples are drawn completely randomly in the first place.}
+    \includegraphics[width=\columnwidth]{plots/figure_3_peak_atlas_utilisation.png}
+    \caption{The distribution of the 1000 \texttt{peak\_utilisation} and
+    \texttt{atlas\_utilisation} percentage at 8 choices of \texttt{max\_tries} for auto
+    line list (top) and manual line list (bottom). The low utilisation fraction in the
+    top figure indicates that the auto line list contains much more lines than the
+    number of peaks being detected, which makes it much more likely to fit for a wrong
+    solution, as well as limiting the computing performance. The much higher
+    utilisation fraction in the manual list demonstrates that \texttt{rascal} has a
+    high repeatibility despite the trial samples are drawn completely randomly in the
+    first place.}
     \label{fig:peak_utilisation}
 \end{figure}
 
 
 \begin{figure*}[h]
     \centering
-    \includegraphics[width=\textwidth]{plots/figure_5_wavelengths.png}
-    \caption{From left to right, they show the distributions of the wavelength solution at pixel 150, 350, 550, 750 and 950 at the 8 \texttt{max\_tries} with automatic line list (top), and manual line list (bottom). The smallest and largest pixel positions are at the two ends of the usable spectral wavelength range. The grid spacing in each column is identical but they vary across the columns: each spacing in the x-axis corresponds to the resolution~($\Delta\lambda$) at that wavelength. There is a clear pattern of a narrower distribution with larger \texttt{max\_tries}. It is also clear that manual line list outperforms auto line list significantly. The statistics can be referred to Table~\ref{tab:stats}.}
+    \includegraphics[width=\textwidth]{plots/figure_4_wavelengths.png}
+    \caption{From left to right, they show the distributions of the wavelength
+    solution at pixel 150, 350, 550, 750 and 950 at the 8 \texttt{max\_tries} with
+    automatic line list (top), and manual line list (bottom). Pixel 150 and 950 are
+    roughly at the two ends of the usable spectral wavelength range. The
+    grid spacing in each sub-figure corresponds to $10\times$ and $1\times$ the
+    resolution~($\Delta\lambda$) at that wavelength, respectively. The light blue
+    shaded regions show the identical wavelength range in each column. There is a
+    clear pattern of a narrower distribution with larger \texttt{max\_tries}. It
+    is also clear that manual line list outperforms auto line list significantly.
+    The statistics can be referred to Table~\ref{tab:stats}.}
     \label{fig:wavelengths}
 \end{figure*}
 
@@ -486,39 +506,67 @@ that using a manual line list.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\columnwidth]{plots/figure_6_heatmap.png}
-    \caption{The heatmaps showing the deviation of the fitted wavelengths from the true value as a function of pixel. The using auto line list (top) is giving good solutions most of the time, but it is clear that the manual line list completely outperforms the automatic one.}
+    \includegraphics[width=\columnwidth]{plots/figure_5_heatmap.png}
+    \caption{The heatmaps showing the deviation of the fitted wavelengths from the
+    true value. The x-axis shows the calibration ID, where they are sorted by the
+    fitted wavelength value at pixel 0. Note the difference in the scale in the y-axis.
+    The using of auto line list (top) is giving good rough guesses most of the time,
+    but it is clear that the manual line list completely outperforms the automatic
+    one. The black dashed line in the top panel denotes 10 times the resolution that
+    the spectrograph could resolve. The black dotted line in the bottom panel indicates
+    the resolving power of spectrograph. The white dotted vertical lines denote the
+    last usable peaks from the arc spectrum. The white dotted horizontal
+    lines in the top panel mark the equivalent regions shown in the bottom. }
     \label{fig:heatmap}
 \end{figure}
 
-\begin{table*}
+\begin{landscape}
+\begin{table}
     \centering
-    \begin{tabular}{c|c|ccccc|c|ccccc}
-
-        Grating & \texttt{max\_tries} & c0 & c1 & c2 & c3 & c4 & RMS & $\Delta\lambda_{150}$ & $\Delta\lambda_{350}$ & $\Delta\lambda_{550}$ & $\Delta\lambda_{750}$ & $\Delta\lambda_{950}$\\
+    \begin{tabular}{|c|c|ccccc|c|ccccc|}
+        \hline
+        Grating & \texttt{max\_tries} & c0 & c1 & c2 & c3 & c4 & RMS & $\lambda_{150}$ & $\lambda_{350}$ & $\lambda_{550}$ & $\lambda_{750}$ & $\lambda_{950}$\\
         \hline
         \hline
-          & 100 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 150 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 200 & d & d & d & d & d & d & d & d & d & d & d \\
-        LT/SPRAT & 250 & d & d & d & d & d & d & d & d & d & d & d \\
-        (auto) & 500 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 1000 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 2000 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 5000 & d & d & d & d & d & d & d & d & d & d & d \\\hline
-          & 100 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 150 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 200 & d & d & d & d & d & d & d & d & d & d & d \\
-        LT/SPRAT & 250 & d & d & d & d & d & d & d & d & d & d & d \\
-        (manual) & 500 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 1000 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 2000 & d & d & d & d & d & d & d & d & d & d & d \\
-          & 5000 & d & d & d & d & d & d & d & d & d & d & d \\\hline
+          \multirow{16}{*}{\shortstack{LT/SPRAT\\(auto)}}
+              & \multirow{2}{*}{100} & 3430.91  & 3.89110   & 8.11195e-3    & -1.77023e-5  & 1.10558e-8    & 1.20   & 4142.95  & 5193.43  & 6091.33  & 6942.16  & 8275.98\\
+              &                      & (277.53) & (2.66040) & (1.341420e-2) & (2.50719e-5) & (1.55446e-8)  & (0.48) & (198.09) & (124.61) & (165.96) & (224.55) & (1087.80)\\\cline{2-13}
+              & \multirow{2}{*}{150} & 3441.27  & 3.67420   & 8.73202e-3    & -1.80828e-5  & 1.09435e-8    & 1.21   & 4133.38  & 5185.83  & 6096.39  & 6942.60  & 8222.24\\
+              &                      & (275.03) & (2.55439) & (1.259104e-2) & (2.35177e-5) & (1.44915e-8)  & (0.47) & (182.90) & (119.30) & (163.08) & (218.29) & (940.63)\\\cline{2-13}
+              & \multirow{2}{*}{200} & 3431.77  & 3.86114   & 7.74110e-3    & -1.61698e-5  & 9.75522e-9    &  1.22  & 4135.48  & 5184.56  & 6099.49  & 6946.96  & 8168.27\\
+              &                      & (270.60) & (2.53238) & (1.218320e-2) & (2.20195e-5) & (1.319168e-8) & (0.47) & (189.04) & (123.13) & (162.76) & (215.11) & (794.29)\\\cline{2-13}
+              & \multirow{2}{*}{250} & 3426.09  & 3.82252   & 8.08717e-3    & -1.69782e-5  & 1.03540e-8    & 1.24   & 4129.37  & 5182.08  & 6097.55  & 6955.42  & 8232.91\\
+              &                      & (271.56) & (2.48186) & (1.211745e-2) & (2.25815e-5) & (1.38574e-8)  & (0.46) & (185.86) & (124.23) & (159.47) & (207.24) & (845.67)\\\cline{2-13}
+              & \multirow{2}{*}{500} & 3389.71  & 3.79888   & 8.64679e-3    & -1.77277e-5  & 1.05346e-8    & 1.26   & 4099.60  & 5176.56  & 6109.29  & 6957.06  & 8183.65\\
+              &                      & (257.78) & (2.44981) & (1.196522e-2) & (2.27548e-5) & (1.41504e-8)  & (0.45) & (170.86) & (127.02) & (162.26) & (213.51) & (829.18)\\\cline{2-13}
+              & \multirow{2}{*}{1000} & 3425.42  & 3.91589   & 7.44165e-3    & -1.53946e-5  & 9.17279e-9    & 1.28   & 4132.93  & 5185.19  & 6108.35  & 6956.00  & 8133.96\\
+              &                       & (270.52) & (2.46457) & (1.176760e-2) & (2.15525e-5) & (1.288359e-8) & (0.45) & (180.70) & (126.75) & (160.07) & (194.94) & (627.35)\\\cline{2-13}
+              & \multirow{2}{*}{2000} & 3397.81  & 3.85994   & 7.74098e-3    & -1.53905e-5  & 8.90982e-9    & 1.31   & 4103.55  & 5170.90  & 6117.14  & 6973.32  & 8112.66\\
+              &                       & (249.37) & (2.26615) & (1.066695e-2) & (1.96646e-5) & (1.183229e-8) & (0.45) & (166.04) & (126.99) & (153.13) & (184.01) & (547.28)\\\cline{2-13}
+              & \multirow{2}{*}{5000} & 3437.69  & 3.79338   & 7.43939e-3    & -1.50070e-5  & 8.89499e-9    & 1.30   & 4127.94  & 5166.75  & 6091.63  & 6950.74  & 8133.86\\
+              &                       & (264.11) & (2.23694) & (1.060192e-2) & (2.00503e-5) & (1.228653e-8) & (0.46) & (173.75) & (126.16) & (150.86) & (203.43) & (604.73)\\\hline\hline
+         \multirow{16}{*}{\shortstack{LT/SPRAT\\(manual)}}
+              & \multirow{2}{*}{100} & 3515.46  & 3.46559   & 3.14713e-3   & -3.61417e-6  & 1.55256e-9   & 1.50   & 4094.70 & 4982.28 & 5914.30 & 6851.42 & 7813.93\\
+              &                      & (105.64) & (1.03231) & (3.76259e-3) & (5.80846e-6) & (3.07476e-9) & (0.23) & (22.77) & (9.95)  & (26.44) & (82.38) & (198.66)\\\cline{2-13}
+              & \multirow{2}{*}{150} & 3503.96  & 3.60646   & 2.58294e-3   & -2.72403e-6  & 1.08389e-9   & 1.52   & 4094.41 & 4982.11 & 5914.83 & 6855.46 & 7808.52\\
+              &                      & (82.64)  & (0.81248) & (3.02430e-3) & (4.76675e-6) & (2.54765e-9) & (0.22) & (18.45) & (4.79)  & (21.71) & (59.78) & (158.04)\\\cline{2-13}
+              & \multirow{2}{*}{200} & 3500.89  & 3.65013   & 2.40555e-3   & -2.44954e-6  & 9.57549e-10  & 1.52   & 4094.75 & 4982.46 & 5916.22 & 6861.19 & 7819.28\\
+              &                      & (84.46)  & (0.80184) & (2.92103e-3) & (4.49597e-6) & (2.38484e-9) & (0.22) & (21.98) & (7.82)  & (16.93) & (51.86) & (132.35)\\\cline{2-13}
+              & \multirow{2}{*}{250} & 3493.40  & 3.71641   & 2.163411e-3  & -2.07230e-6  & 7.64816e-10  & 1.51    & 4092.93 & 4981.79 & 5917.07 & 6865.37 & 7822.68\\
+              &                      & (64.56)  & (0.60146) & (2.16526e-3) & (3.37330e-6) & (1.837343e-9) & (0.20) & (15.42) & (3.45)  & (10.55) & (40.75) & (120.48)\\\cline{2-13}
+              & \multirow{2}{*}{500} & 3487.26  & 3.78006   & 1.92412e-3   & -1.70572e-6  & 5.77711e-10   & 1.53   & 4092.10 & 4981.53 & 5917.42 & 6867.81 & 7822.94\\
+              &                      & (49.28)  & (0.41727) & (1.39933e-3) & (2.07474e-6) & (1.100292e-9) & (0.19) & (13.27) & (2.23)  & (4.61)  & (18.65) & (61.91)\\\cline{2-13}
+              & \multirow{2}{*}{1000} & 3483.98 & 3.80699   & 1.84359e-3   & -1.61122e-6  & 5.48483e-10   & 1.55   & 4091.34 & 4981.41 & 5917.63 & 6870.04 & 7829.77\\
+              &                       & (42.25) & (0.33934) & (1.04425e-3) & (1.42173e-6) & (7.12646e-10) & (0.17) & (11.07) & (1.12)  & (0.74)  & (4.51)  & (30.27)\\\cline{2-13}
+              & \multirow{2}{*}{2000} & 3483.41 & 3.82264   & 1.76931e-3   & -1.49324e-6  & 4.89931e-10   & 1.60   & 4091.82 & 4981.40 & 5917.47 & 6870.68 & 7830.50\\
+              &                       & (26.17) & (0.23186) & (7.3718e-4)  & (9.9813e-7)  & (4.87991e-10) & (0.17) & (5.00)  & (0.51)  & (0.66)  & (1.46)  & (15.20)\\\cline{2-13}
+              & \multirow{2}{*}{5000} & 3478.03 & 3.87929   & 1.56648e-3   & -1.20105e-6  & 3.45073e-10   & 1.68   & 4091.29 & 4981.36 & 5917.25 & 6871.13 & 7828.41\\
+              &                       & (20.82) & (0.17392) & (5.1839e-4)  & (6.5910e-7)  & (3.02712e-10) & (0.15) & (4.40)  & (0.50)  & (0.48)  & (0.49)  & (5.23)\\\hline
     \end{tabular}
-    \caption{Caption}
+    \caption{The median and 1 standard deviation values of the polynomial coefficients (c0 through c4), root-mean-squared (RMS) of the is fitted wavelength solution, and the five wavelength value at pixel 150 to 950 in 200 increment.}
     \label{tab:stats}
-\end{table*}
-
+\end{table}
+\end{landscape}
 
 \section{Distribution}
 The \textsc{RASCAL} is released under the BSD (3-Clause) License. The
