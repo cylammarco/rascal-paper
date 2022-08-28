@@ -160,17 +160,17 @@ Telescope~\citep{2004SPIE.5489..679S} at the Observatorio Astrof{\'i}sico Roque 
 Muchachos, the MOOKODI on the Lesedi Telescope 
 at the South African Astronomical Observatory, and the MISTRAL on the 1.93\,m
 telescope at the Haute-Provence Observatory. On the data reduction side, a new
-general spectral pipeline, \texttt{ASPIRED}~\citep{2020arXiv201203505L, 2020zndo...4306065L},
+general spectral pipeline, \texttt{ASPIRED}~\citep{2021arXiv211102127L, 2020zndo...4306065L},
 that is completely independent of \texttt{iraf}~\citep{1986SPIE..627..733T} is under
-active development and it is close to completion. It has been a concurrent development
+active development. It has been a concurrent development
 of the \texttt{RASCAL} software~(this work) that handles the wavelength
 calibration~\citep{2019arXiv191205883V, 2020zndo...4117517V}.
 
-This following article is organised in this structure: in Section~2, we will address
-the difficulties in achieving automated wavelength calibration; in Section~3,
+This article is organised as follow: in Section~\textsection2, we will address
+the difficulties in achieving automated wavelength calibration; in Section~\textsection3,
 \texttt{RASCAL} will describes in detail; the quality and the repeatability will
-be demonstrated in Section~4; the deployment on various systems and some example
-independent demonstrators will be reported in Section 5; in the final section, we
+be demonstrated in Section~\textsection4; the deployment on various systems and some example
+independent demonstrators will be reported in Section~\textsection5; in the final section, we
 will conclude on the software, including the limitation, maintenance, and the potential
 future development.
 
@@ -232,8 +232,8 @@ skew the final model parameters. This is not a problem limited to automated matc
 \citet{2018ApOpt..57.6876S} search for \textit{plausible} sets of
 correspondences that are constrained by prior knowledge about the optical system.
 Specifically, they find solutions that agree with linear approximations to the
-system~($x_\lambda = Dx + c$). We likely know which lamp was used, and we also have
-priors on the minimum wavelength~($c$) and dispersion ($D$) of the system. Let $A'$ be
+system~($x_\lambda = Dx + c$). In our implementation of the wav3elength calibration
+with RASCAL, We know which lamp was used, and we also have information of the minimum wavelength~($c$) and dispersion ($D$) of the system a priori. Let $A'$ be
 a filtered atlas that only contains lines within a user-specified range of interest.
 We allow a default tolerance of $\pm 200$ \AA~to this value. We constrain $D$ based on
 the number of pixels in the spectrum and the wavelength range. By plotting all pairs of $A'$ and $x$ the Hough transform is used to look for straight lines with the most inlying points, that is points that are close to the line within some error threshold. For promising line candidates (many inliers), the associated points are selected and used for fitting.
@@ -251,27 +251,67 @@ to return atlas correspondences for each peak, which can be passed to a more
 sophisticated fitting function e.g. an analytical model of the instrument such as
 in \citet{2013OptEn..52a3603L}.
 
-Three built-in diagnostic plots are available, each is available in both
+Some diagnostic plots are available, each is available in both
 \texttt{plotly}~\citep{plotly} and \texttt{matplotlib}~\citep{Hunter:2007, thomas_a_caswell_2021_4743323}. The former can generate interactive plots
-readable by a browser while being able to be rendered as static plots. However,
-the installation can be difficult at times, so it is not our default plotting
-library. In fact, it is not even installed as a dependency. On the other hand,
+readable by a browser while being able to be rendered as static plots.
 \texttt{matplotlib} is the most commonly used plotting library
-among \texttt{Python} users, it has no known problematic upstream dependency issue.
-Therefore, it is chosen as our default plotting library. Its lack of
-interactivity has a small drawback, but there are external packages that can
-convert a \texttt{matplotlib} figure object into interactive plots, for example
-with \texttt{mpld3}\footnote{\url{http://mpld3.github.io/}}, and this can be done
-completely outside the functional call of \texttt{RASCAL}.
+among \texttt{Python} users, and it has no known problematic upstream dependency
+issue. Its lack of interactivity has a small drawback, but there are external
+packages that can convert a \texttt{matplotlib} figure object into interactive plots,
+for example with \texttt{mpld3}\footnote{\url{http://mpld3.github.io/}}, and this
+can be done completely outside the functional call of \texttt{RASCAL}. Therefore,
+\texttt{matplotlib} is chosen as our default plotting library.
 
 \subsection{Hough Transform}
-Initially, every pair of peaks and emission lines are enumerated~(i.e.\ the
-Cartesian product of the sets $A' \times P$.) The Hough
-transform~\citep{osti_4746348} is used to search for linear correspondences
-among these enumerated pairs. The result of this is a histogram of possible lines
-in $(D, c)$ space. Peaks in the Hough space correspond to straight lines
-in the pixel-wavelength space which pass through (or near) many sets of
-$A' \times P$; we call this a candidate pair/set hereafter.
+The Hough transform~\citep{osti_4746348} is a feature extraction technique used
+in image analysis, computer vision, and digital image processing. The classical Hough
+transform was concerned with the identification of lines in the image, but later this
+transform was extended to handle arbitrary shapes.
+
+In automated analysis of digital images, it usually comes down to detecting
+simple shapes, such as straight lines, circles or ellipses. Due to imperfections
+in either or both of the image or the detector, there may be missing or spurious
+points or pixels. Thus, It is often non-trivial to identify any geometrical shapes.
+The purpose of the Hough transform is to address this problem by making it
+possible to perform groupings of edge points into object candidates by performing
+an explicit voting procedure over a set of parameterised image objects.
+
+The linear Hough transform algorithm estimates the two parameters that define a
+straight line -- the gradient and the intercept. The transform space has two
+dimensions, and every point in the transform space is used as an accumulator to
+detect a line. Every point in the detected edges in the image contributes to the
+accumulators.
+
+The dimension of the accumulator equals the number of unknown parameters,
+i.e.\ two, considering quantised values of r and θ in the pair $(r, \theta)$. For
+each pixel at $(x, y)$ and its neighbourhood, the Hough transform algorithm
+determines whether there is enough evidence of a straight line at that pixel. If so,
+it will calculate the parameters $(r, \theta)$ of that line, then look for the
+accumulator's bin that the parameters fall into, and increment the value of that
+bin.
+
+By finding the bins with the highest values, typically by looking for local maxima
+in the accumulator space, the most likely lines can be extracted. The simplest way
+of finding these peaks is by applying some form of threshold, but other techniques
+may yield better results in different circumstances -- determining which lines are
+found, as well as how many. Due to imperfection errors in the edge-detection step,
+there will usually be errors in the accumulator space, which may make it non-trivial
+to find the appropriate peaks, and thus the appropriate lines.
+
+The final result of the linear Hough transform is a two-dimensional array similar
+to the accumulator--one dimension of this matrix is the quantised angle $\theta$,
+and the other dimension is the quantised distance r. Each element of the matrix has
+a value equal to the sum of the points or pixels that are positioned on the line
+represented by quantised parameters $(r, \theta)$. So the element with the highest
+value indicates the straight line that is most represented in the input image.
+
+In the application to wavelength calibration, every pair of peaks and emission
+lines are enumerated~(i.e.\ the Cartesian product of the sets $A' \times P$.)
+The Hough transform is used to search for linear correspondences among these
+enumerated pairs. The result of this is a histogram of possible lines in
+$(D, c)$ space. Peaks in the Hough space correspond to straight lines in the
+pixel-wavelength space which pass through (or near) many sets of $A' \times P$;
+we call this a candidate pair/set hereafter.
 
 \subsection{RANSAC}
 Random sample consensus, RANSAC, is an algorithm for robust fitting,
@@ -284,22 +324,26 @@ fit to this sample should also fit the majority of the rest of our data.
 Conversely, if we sample an outlier by mistake, the fit will not agree with
 the rest of the dataset.
 
-This is conceptually very simple but works extremely well in practice and is widely used for noisy vision tasks such as matching feature points between images taken from different viewpoints. There are variants of RANSAC which claim to be able to fit functions to data with inlier ratios of just 5\% \citep{hast_optimal_ransac}.
-Typically the sample size is the minimum required to fit the model, so for
-a linear model, we would draw 2 random points. If you know the percentage of
-outliers in your data it is possible to calculate some statistical estimate
-of how many iterations is required before an inlier-only sample is drawn~(to
-some degree of confidence). In practice, we never know the inlier-to-outlier
-ratio so we need to try ``a large number'' of samples\footnote{From experience,
-on the order of 1000 is ``a lot''}. This number of samples can also be adjusted as 
-a hyperparameter for the algorithm to provide the best results on a specific
-instrument. We emphasise that using the default line list without any
-pruning by users will lead to slow computation and low repeatability.
+This is conceptually very simple but works extremely well in practice and is
+widely used for noisy vision tasks such as matching feature points between images
+taken from different viewpoints. There are variants of RANSAC which claim to be
+able to fit functions to data with inlier ratios of just 5\%
+\citep{hast_optimal_ransac}. Typically the sample size is the minimum required
+to fit the model, so for a linear model, we would draw 2 random points. If you
+know the percentage of outliers in your data it is possible to calculate some
+statistical estimate of how many iterations is required before an inlier-only
+sample is drawn~(to some degree of confidence). In practice, we never know the
+inlier-to-outlier ratio so we need to try ``a large number'' of
+samples\footnote{From experience, on the order of 1000 is ``a lot''}. This number
+of samples can also be adjusted as  a hyperparameter for the algorithm to provide
+the best results on a specific instrument. We emphasise that using the default
+line list without any pruning by users will lead to slow computation and low
+repeatability.
 
 We also need to decide how to score a particular sample fit. In the original
 version of RANSAC, the number if inliers corresponding to a fit is used. More
-inliers equals a better fit. In \texttt{RASCAL} we use a slight modification called
-M-SAC~\citep{Torr00mlesac:a} which also weights inliers by the fit error.
+inliers equals a better fit. In \texttt{RASCAL} we use a slight modification
+called M-SAC~\citep{Torr00mlesac:a} which also weights inliers by the fit error.
 This is useful because it acts as a tie-breaker between two fits with the
 same number of inliers.
 
